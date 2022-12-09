@@ -1202,6 +1202,7 @@ void MainWindow::updateHashControls()
 
     bHashCopy->setEnabled(false);
     hashLabel->clear();
+    hashLabel->setText(tr("No Hash String yet"));
 
     if (cboxHashType->currentIndex() != 0 && !leFile->text().isEmpty() && validFile)
     {
