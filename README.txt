@@ -1,4 +1,13 @@
 Image Writer for Microsoft Windows
+
+Release 1.0.1
+======
+bugfixed: startup crash when virtual disk mount in window.
+
+![Screenshot](https://github.com/buaabyl/win32diskimager/releases/download/win32diskimager_v1.0.1/Win32DiskImager_Qt5.9.6.png)
+
+
+
 Release 1.0.0 - The "Holy cow, we made a 1.0 Release" release.
 ======
 About:
