@@ -1,10 +1,18 @@
 # Image Writer for Microsoft Windows
 
+## Release 1.0.2
+
+* feature: show physic disk number and part number.
+* feature: show hardware vendor and product name.
+
+![v1.0.2](Win32DiskImager_v1.0.2.png)
+
+
 ## Release 1.0.1
 
 * bugfixed: startup crash when virtual disk mount in window.
 
-![v1.0.1](Win32DiskImager_Qt5.9.6.png)
+![v1.0.1](Win32DiskImager_v1.0.1.png)
 
 
 
