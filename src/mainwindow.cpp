@@ -1106,10 +1106,11 @@ void MainWindow::getLogicalDrives()
             // the "A" in drivename will get incremented by the # of bits
             // we've shifted
             char drivename[] = "\\\\.\\A:\\";
+            char extra_info[128];
             drivename[4] += i;
-            if (checkDriveType(drivename, &pID))
+            if (checkDriveType(drivename, &pID, extra_info, 128))
             {
-                cboxDevice->addItem(QString("[%1:\\]").arg(drivename[4]), (qulonglong)pID);
+                cboxDevice->addItem(QString("[%1:\\] %2").arg(drivename[4]).arg(extra_info), (qulonglong)pID);
             }
         }
         driveMask >>= 1;
@@ -1156,15 +1157,15 @@ bool MainWindow::nativeEvent(const QByteArray &type, void *vMsg, long *result)
                     char ALET = FirstDriveFromMask(lpdbv->dbcv_unitmask);
                     // add device to combo box (after sanity check that
                     // it's not already there, which it shouldn't be)
-                    QString qs = QString("[%1:\\]").arg(ALET);
-                    if (cboxDevice->findText(qs) == -1)
+                    ULONG pID;
+                    char longname[] = "\\\\.\\A:\\";
+                    char extra_info[128] = {0};
+                    longname[4] = ALET;
+                    // checkDriveType gets the physicalID
+                    if (checkDriveType(longname, &pID, extra_info, 128))
                     {
-                        ULONG pID;
-                        char longname[] = "\\\\.\\A:\\";
-                        longname[4] = ALET;
-                        // checkDriveType gets the physicalID
-                        if (checkDriveType(longname, &pID))
-                        {
+                        QString qs = QString("[%1:\\] %2").arg(ALET).arg(extra_info);
+                        if (cboxDevice->findText(qs) == -1) {
                             cboxDevice->addItem(qs, (qulonglong)pID);
                             setReadWriteButtonState();
                         }

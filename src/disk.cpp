@@ -39,6 +39,52 @@ void ShowCriticalMessage(QString title, QString text)
     msgbox.exec();
 }
 
+//
+//  Partition Type enums
+//
+typedef struct _MBR_PARTNAME {
+    unsigned char id;
+    const char*   name;
+}MBR_PARTNAME;
+
+typedef struct _GPT_PARTNAME {
+    GUID          guid;
+    const char*   name;
+}GPT_PARTNAME;
+
+// copy from GNU utils source code
+static const MBR_PARTNAME mbr_partnames[] = {
+#define N_(Text) Text
+#include "pt-mbr-partnames.h"
+#undef N_
+};
+
+static const GPT_PARTNAME gpt_partnames[] = {
+#include "pt-gpt-partnames.h"
+};
+
+const char* GetMBRPartName(unsigned char id)
+{
+    int n = sizeof(mbr_partnames)/sizeof(mbr_partnames[0]);
+    for (int i = 0;i < n;i++) {
+        if (mbr_partnames[i].id == id) {
+            return mbr_partnames[i].name;
+        }
+    }
+    return NULL;
+}
+
+const char* GetGPTPartName(const GUID* guid)
+{
+    int n = sizeof(gpt_partnames)/sizeof(gpt_partnames[0]);
+    for (int i = 0;i < n;i++) {
+        if (memcmp(&gpt_partnames[i].guid, guid, sizeof(GUID)) == 0) {
+            return gpt_partnames[i].name;
+        }
+    }
+    return NULL;
+}
+
 HANDLE getHandleOnFile(LPCWSTR filelocation, DWORD access)
 {
     HANDLE hFile;
@@ -57,6 +103,7 @@ HANDLE getHandleOnFile(LPCWSTR filelocation, DWORD access)
     }
     return hFile;
 }
+
 DWORD getDeviceID(HANDLE hVolume)
 {
     VOLUME_DISK_EXTENTS sd;
@@ -445,7 +492,7 @@ bool GetMediaType(HANDLE hDevice)
     return false;
 }
 
-bool checkDriveType(char *name, ULONG *pid)
+bool checkDriveType(char *name, ULONG *pid, char* extra_info, int extra_len)
 {
     HANDLE hDevice;
     PSTORAGE_DEVICE_DESCRIPTOR pDevDesc;
@@ -509,6 +556,66 @@ bool checkDriveType(char *name, ULONG *pid)
                         *pid = deviceInfo.DeviceNumber;
                         retVal = true;
                     }
+                }
+
+                if (extra_info != NULL)
+                {
+                    int offs = 0;
+                    PARTITION_INFORMATION_EX partInfo;
+
+                    offs += snprintf(extra_info, extra_len, "Disk%d.Part%d",
+                            deviceInfo.DeviceNumber, 
+                            deviceInfo.PartitionNumber);
+
+                    if (DeviceIoControl(
+                            hDevice,
+                            IOCTL_DISK_GET_PARTITION_INFO_EX,
+                            NULL,
+                            0,
+                            &partInfo, 
+                            sizeof(partInfo),
+                            &cbBytesReturned,
+                            NULL))
+                    {
+                        const char* name = NULL;
+                        if (partInfo.PartitionStyle == PARTITION_STYLE_MBR)
+                        {
+                            name = GetMBRPartName(partInfo.Mbr.PartitionType);
+                        }
+                        else if (partInfo.PartitionStyle == PARTITION_STYLE_GPT)
+                        {
+                            name = GetGPTPartName(&partInfo.Gpt.PartitionType);
+                        }
+                        if (name != NULL)
+                        {
+                            offs += snprintf(extra_info + offs, extra_len-offs, ", %s", name);
+                        }
+                    }
+
+                    if (((int)pDevDesc->VendorIdOffset > 0) || ((int)pDevDesc->ProductIdOffset > 0))
+                    {
+                        offs += snprintf(extra_info + offs, extra_len-offs, ",");
+                    }
+
+                    if ((int)pDevDesc->VendorIdOffset > 0)
+                    {
+                        const char* str = ((const char*)pDevDesc) + pDevDesc->VendorIdOffset;
+                        offs += snprintf(extra_info + offs, extra_len-offs, " %s", str);
+                    }
+
+                    if ((int)pDevDesc->ProductIdOffset > 0)
+                    {
+                        const char* str = ((const char*)pDevDesc) + pDevDesc->ProductIdOffset;
+                        if (extra_info[offs-1] == ' ')
+                        {
+                            offs += snprintf(extra_info + offs, extra_len-offs, "%s", str);
+                        }
+                        else
+                        {
+                            offs += snprintf(extra_info + offs, extra_len-offs, " %s", str);
+                        }
+                    }
+
                 }
             }
 

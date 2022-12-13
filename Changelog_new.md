@@ -1,3 +1,10 @@
+Release 1.0.2
+=============
+* Update: show physic disk number and part number
+* Update: show device vendor and product string
+
+
+
 Release 1.0.1
 =============
 * Bug fixes: startup fail when virtual driver mounted in system.
