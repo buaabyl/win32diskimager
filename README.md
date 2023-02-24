@@ -1,5 +1,11 @@
 # Image Writer for Microsoft Windows
 
+## Release 1.0.3
+
+change UI, make the same size of bottom buttons.
+
+![v1.0.3](Win32DiskImager_v1.0.3.png)
+
 ## Release 1.0.2
 
 * feature: show physic disk number and part number.
